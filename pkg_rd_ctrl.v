@@ -4,7 +4,7 @@
  * @Module Name : PKG_RD_CTRL
  * @version     : V1.0
  * @Create Time : Do not edit
- * @LastEditTime: 2024-08-03 19:04:06
+ * @LastEditTime: 2024-08-03 19:17:38
  */
 
 module PKG_RD_CTRL (
@@ -26,8 +26,8 @@ module PKG_RD_CTRL (
     output reg [7:0] chx_data_out, //Combinational logic output
     output reg       chx_sop_out ,
     output reg       chx_eop_out ,
-    output reg       chx_qos_out ,
-    output reg [2:0] chx_id_out  ,
+    output           chx_qos_out ,
+ //   output reg [2:0] chx_id_out  ,
 
     output [7:0]     rr_req,
     output [7:0]     rr_ack
@@ -51,6 +51,8 @@ wire low_ram_empty ;
 wire eop_flag; //Used to determine whether the current read is the last packet
 
 reg send_qos_flag;  //Indicates sending high and low priority messages respectively
+wire [2:0] req_dec_id;
+
 
 //MAIN CODE
 assign high_ram_empty = (high_real_waddr == hram_raddr);
@@ -183,16 +185,48 @@ always @(*) begin
             chx_data_out = hram_rdata;
         else 
             chx_data_out = lram_rdata;
+    end else if(curr_state == ST_SEND) begin
+        if(send_qos_flag == 1'b1)
+            chx_data_out = hram_rdata;
+        else 
+            chx_data_out = lram_rdata;
     end
-
+end
+always @(*) begin
+    chx_sop_out = 1'b0;
+    if(curr_state == ST_REQ && (rr_req == rr_ack)) begin
+        chx_sop_out = 1'b1;
+    end
 end
 
+always @(*) begin
+    chx_eop_out = 1'b0;
+    if(curr_state == ST_SEND && (hram_rdata[8] == 1'b1)) begin
+        chx_eop_out = 1'b1;
+    end
+end
 
-    //RR Interface 
-    output reg [7:0] chx_data_out, //Combinational logic output
-    output reg       chx_sop_out ,
-    output reg       chx_eop_out ,
-    output reg       chx_qos_out ,
+assign chx_qos_out = send_qos_flag;
+
+
+req_dec_id = send_qos_flag ? hram_rdata[10:8] : lram_rdata[10:8] ;
+
+always@(*) begin
+    rr_req = 8'b0;
+    if(curr_state = ST_REQ) begin
+        case(req_dec_id)
+            3'b000: rr_req = 8'b00000001;
+            3'b001: rr_req = 8'b00000010;
+            3'b010: rr_req = 8'b00000100;
+            3'b011: rr_req = 8'b00001000;
+            3'b100: rr_req = 8'b00010000;
+            3'b101: rr_req = 8'b00100000;
+            3'b110: rr_req = 8'b01000000;
+            3'b111: rr_req = 8'b10000000;
+            default: rr_req = 8'b0;
+        endcase
+    end
+end
 
 
 endmodule
