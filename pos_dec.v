@@ -10,7 +10,7 @@ module pos_dec(
 
     output reg[2:0] err_cnt,
     output reg err_vld
-)
+);
 
 wire has_zero;
 wire has_max;
@@ -58,7 +58,7 @@ always@(posedge clk or negedge rst_n)begin//记录0到ffff前一拍持续时间�
         else ;
     end
     else begin // zero_flag=1
-        if(has_zero==0 & has_max=1)
+        if(has_zero==0 & has_max==1)
             cnt=0;
         else if(has_zero==1 && has_max==0)
             if(adc_code3==0)//先判断最后一个,因为就算判断前面的，如果后面的为0也会刷
@@ -69,6 +69,8 @@ always@(posedge clk or negedge rst_n)begin//记录0到ffff前一拍持续时间�
                 cnt<=2;
             else
                 cnt<=3;
+        else if(has_zero ==0 &has_max==0)
+            cnt <= cnt+4;
         else begin//科目一，只可能出现f在前，零在后。 如果零在前，f在后就出现同排了。
             if(adc_code3==0)//先判断最后一个,因为就算判断前面的，如果后面的为0也会刷
                 cnt<=0;
