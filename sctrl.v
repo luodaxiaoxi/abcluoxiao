@@ -26,13 +26,13 @@ assign vld_m = (has_pkt == 1) ? 1:(sflag);
 
 always@(posedge clk or negedge rst_n) begin
     if(rst_n== 0)
-        has_flag <= 0;
+        has_pkt <= 0;
     else if(sflag & mflag==0)
-        has_flag <= 1;
+        has_pkt <= 1;
     else if(sflag & mflag & has_pkt)
-        has_flag <= 1;
+        has_pkt <= 1;
     else if(sflag & mflag & has_pkt==0)
-        has_flag <= 0;  
+        has_pkt <= 0;  
     else ;  
 end
 
@@ -71,11 +71,11 @@ always@(posedge clk or negedge rst_n) begin
     if(rst_n==0)
         cnt <= 0;
     else if( sflag )
-        cnt = cnt + 1;
-    else if(
-        data_t <= data_s;
-    else if(has_pkt == 1 & sflag)
-        data_t <= data_s;
-    else ;
+        cnt <= cnt + 1;
+    else 
+        cnt <= 0;
 end
+
+
+const_flag = ( cnt > 0 & has_pkt ) | cnt > 0;
 endmodule
